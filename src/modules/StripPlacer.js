@@ -51,8 +51,8 @@ class StripPlacer {
     _generateSerpentineOrder(placements) {
         // Group placements by their Z coordinate
         const rows = placements.reduce((acc, p) => {
-            acc[p.z] = acc[p.z] || [];
-            acc[p.z].push(p);
+            acc[p.x] = acc[p.x] || [];
+            acc[p.x].push(p);
             return acc;
         }, {});
 
