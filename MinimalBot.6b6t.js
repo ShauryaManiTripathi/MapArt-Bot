@@ -1,4 +1,5 @@
 const mineflayer = require("mineflayer");
+const minecraftData = require('minecraft-data');
 const { SocksClient } = require("socks");
 
 /**
@@ -179,24 +180,26 @@ class MinimalBot {
       }
 
       if (this._options.auth == "offline" && this._options.host == "6b6t.org") {
+        this.bot.chat(`/login ${this.options.password}`);
         console.log("=== initiating Captcha Bypass ===");
         setTimeout(() => {
           //const goal = new this.goals.GoalBlock(-1000, 102, -988); // Spawn point coordinates
           //this.pathfinder.setGoal(goal, true);
-        //   let movements = new Movements(this.bot);
-        //   movements.allowSprinting = true;
-        //   movements.allowParkour = true;
-        //   movements.canDig = false; // Safer for servers
-        //   movements.digCost = 100; // Avoid digging
-        //   movements.placeCost = 100;
-        //   movements.allowEntityDetection = true;
-        //   movements.liquidCost = 2; // Avoid water when possible
-        //   this.bot.pathfinder.setMovements(movements);
+          let movements = new this.movements(this.bot);
+          movements.allowSprinting = true;
+          movements.allowParkour = true;
+          movements.canDig = false; // Safer for servers
+          movements.digCost = 100; // Avoid digging
+          movements.placeCost = 100;
+          movements.allowEntityDetection = true;
+          movements.liquidCost = 2; // Avoid water when possible
+          this.bot.pathfinder.setMovements(movements);
           this.startGreenWoolPath();
           console.log("CAPTCHA STARTED! !!!!!!!!!!!!!!!!!!!!");
-        }, 5000);
+        }, 3000);
       }
       await new Promise((resolve) => setTimeout(resolve, 30000));
+      this.bot.pathfinder.setMovements(new this.movements(this.bot));
 
 
       // REMOVED: this._isReconnecting = false; // This was the cause of the bug.
@@ -358,7 +361,7 @@ class MinimalBot {
 
         if (blockStateId) {
           try {
-            const mcData = MinecraftData(this.bot.version);
+            const mcData = minecraftData(this.bot.version);
             const blockState = mcData.blocksByStateId[blockStateId];
             const blockName = blockState ? blockState.name : "";
             isGreenWool = blockName.includes("green_wool");
@@ -424,7 +427,7 @@ class MinimalBot {
     this.bot.swingArm("right");
 
     try {
-      const goal = new goals.GoalBlock(
+      const goal = new this.goals.GoalBlock(
         Math.floor(walkTarget.x),
         Math.floor(walkTarget.y),
         Math.floor(walkTarget.z)
@@ -472,7 +475,7 @@ class MinimalBot {
 
     const portalPos = { x: -1001, y: 101, z: -987 };
     try {
-      const goal = new goals.GoalBlock(portalPos.x, portalPos.y, portalPos.z);
+      const goal = new this.goals.GoalBlock(portalPos.x, portalPos.y, portalPos.z);
       await this.bot.pathfinder.goto(goal);
       console.log("✅ Reached the portal area.");
     } catch (error) {
