@@ -1,6 +1,6 @@
-const MinimalBot = require('./MinimalBot.6b6t');
+const MinimalBot = require('./MinimalBot');
 const botConfig = require('./config/bot_config.json');
-const mapArtOffsets = require('./config/example.mapart_offsets.js');
+const mapArtOffsets = require('./config/mapart_offsets.js');
 
 const ProgressManager = require('./src/utils/ProgressManager');
 const ImageProcessor = require('./src/utils/ImageProcessor');
