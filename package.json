@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "@nxg-org/mineflayer-custom-pvp": "^1.7.6",
+    "canvas": "^3.1.2",
+    "minecraft-data": "*",
+    "mineflayer": "*",
+    "mineflayer-armor-manager": "*",
+    "mineflayer-auto-eat": "^5.0.1",
+    "mineflayer-autocrystal": "*",
+    "mineflayer-pathfinder-antilagback": "*",
+    "mineflayer-pvp": "^1.3.2",
+    "mineflayer-tool": "*",
+    "mineflayer-web-inventory": "^1.8.5",
+    "prismarine-viewer": "^1.33.0",
+    "socks": "^2.8.5",
+    "vec3":"^0.1.8",
+    "jimp":"^0.22.10"
+
+  },
+  "devDependencies": {
+    "socks": "^2.8.5"
+  }
+}
