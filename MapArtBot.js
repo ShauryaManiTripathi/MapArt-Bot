@@ -111,7 +111,7 @@ class MapArtBot extends MinimalBot {
         // Use the provided algorithm, or the default if none is given.
         const algoToUse = ditheringAlgorithm || 'floydSteinberg';
         this.bot.chat(
-            `/msg ${this.master} Processing image: ${imageSource} with ${algoToUse} dithering.`
+            `/msg ${this.master} Processing image: ${imageSource} with ${algoToUse} dithering. Valid options are: ${validAlgorithms.join(', ')}`
         );
 
         const imageData = await ImageProcessor.processImage(imageSource, algoToUse);
