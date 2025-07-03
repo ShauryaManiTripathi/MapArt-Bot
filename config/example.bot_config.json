@@ -1,0 +1,15 @@
+{
+  "host": "6b6t.org",
+  "port": 25565,
+  "username": "USERNAME",
+  "password": "PASSWORD/OFFLINE_PASSWORD",
+  "auth": "offline/microsoft/mojang",
+  "version": "1.20.4",
+  "brand": "fabric",
+  "master_username": "OWNER_USERNAME //whose /msg will be only followed",
+  "plugins": {
+    "pathfinder": true,
+    "tool": true
+  },
+  "pluginSuccessVerbose": true
+}

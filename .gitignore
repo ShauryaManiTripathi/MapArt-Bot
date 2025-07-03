@@ -4,3 +4,5 @@ summary.txt
 .t/
 progress.json
 Obsfucated_Coordonites_Logger.js
+config/bot_config.json
+config/mapart_offsets.js

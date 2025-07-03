@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
-const { width: stripWidth } = require('../../config/mapart_offsets'); // Import strip width from config
+const { width: stripWidth } = require('../../config/example.mapart_offsets.js'); // Import strip width from config
 
 const PROGRESS_FILE = path.join(process.cwd(), 'progress.json');
 const TOTAL_STRIPS = 128 / stripWidth;
