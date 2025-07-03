@@ -1,0 +1,102 @@
+diff --git a/node_modules/mineflayer/lib/plugins/chat.js b/node_modules/mineflayer/lib/plugins/chat.js
+index ef58068..242ddd3 100644
+--- a/node_modules/mineflayer/lib/plugins/chat.js
++++ b/node_modules/mineflayer/lib/plugins/chat.js
+@@ -13,6 +13,44 @@ function inject (bot, options) {
+   // chat.pattern.type will emit an event for bot.on() of the same type, eg chatType = whisper will trigger bot.on('whisper')
+   const _patterns = {}
+   let _length = 0
++  // ### START: Added for chat queue and delay ###
++const chatQueue = []
++let isSending = false
++const CHAT_DELAY = 5000 // 5-second delay
++
++async function processChatQueue () {
++  if (isSending || chatQueue.length === 0) return
++  isSending = true
++
++  const { header, message } = chatQueue.shift()
++
++  // Original chatWithHeader logic is now here
++  if (typeof message === 'number') message = message.toString()
++  if (typeof message !== 'string') {
++    console.error('Chat message type must be a string or number: ' + typeof message)
++    isSending = false
++    processChatQueue() // Process next item
++    return
++  }
++
++  if (!header && message.startsWith('/')) {
++    bot._client.chat(message)
++  } else {
++    const lengthLimit = CHAT_LENGTH_LIMIT - header.length
++    message.split('\n').forEach((subMessage) => {
++      if (!subMessage) return
++      for (let i = 0; i < subMessage.length; i += lengthLimit) {
++        const smallMsg = header + subMessage.substring(i, i + lengthLimit)
++        bot._client.chat(smallMsg)
++      }
++    })
++  }
++
++  await new Promise(resolve => setTimeout(resolve, CHAT_DELAY)) // Wait for 6 seconds
++  isSending = false
++  processChatQueue() // Process the next message in the queue
++}
++// ### END: Added for chat queue and delay ###
+   // deprecated
+   bot.chatAddPattern = (patternValue, typeValue) => {
+     return bot.addChatPattern(typeValue, patternValue, { deprecated: true })
+@@ -118,7 +156,7 @@ function inject (bot, options) {
+         target: data.targetName ? JSON.parse(data.targetName) : undefined,
+         content: message ? JSON.parse(message) : { text: data.plainMessage }
+       }
+-      const registryIndex = data.type.chatType != null ? data.type.chatType : data.type
++      const registryIndex = data.type.registryIndex ? data.type.registryIndex : data.type
+       msg = ChatMessage.fromNetwork(registryIndex, parameters)
+ 
+       if (data.unsignedContent) {
+@@ -142,29 +180,11 @@ function inject (bot, options) {
+     if (data.positionId === 2) bot.emit('actionBar', msg, null)
+   })
+ 
+-  function chatWithHeader (header, message) {
+-    if (typeof message === 'number') message = message.toString()
+-    if (typeof message !== 'string') {
+-      throw new Error('Chat message type must be a string or number: ' + typeof message)
+-    }
+-
+-    if (!header && message.startsWith('/')) {
+-      // Do not try and split a command without a header
+-      bot._client.chat(message)
+-      return
+-    }
+-
+-    const lengthLimit = CHAT_LENGTH_LIMIT - header.length
+-    message.split('\n').forEach((subMessage) => {
+-      if (!subMessage) return
+-      let i
+-      let smallMsg
+-      for (i = 0; i < subMessage.length; i += lengthLimit) {
+-        smallMsg = header + subMessage.substring(i, i + lengthLimit)
+-        bot._client.chat(smallMsg)
+-      }
+-    })
+-  }
++// Replace the original chatWithHeader function with this one
++function chatWithHeader (header, message) {
++  chatQueue.push({ header, message })
++  processChatQueue()
++}
+ 
+   async function tabComplete (text, assumeCommand = false, sendBlockInSight = true, timeout = 5000) {
+     let position
+@@ -188,7 +208,7 @@ function inject (bot, options) {
+   }
+ 
+   bot.whisper = (username, message) => {
+-    chatWithHeader(`/tell ${username} `, message)
++    chatWithHeader(`/msg ${username} `, message)
+   }
+   bot.chat = (message) => {
+     chatWithHeader('', message)

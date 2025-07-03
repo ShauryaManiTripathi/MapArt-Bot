@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "postinstall": "patch-package"
+  },
   "dependencies": {
+    "patch-package": "*",
     "@nxg-org/mineflayer-custom-pvp": "^1.7.6",
     "canvas": "^3.1.2",
     "minecraft-data": "*",
