@@ -1,4 +1,4 @@
-const MinimalBot = require('./MinimalBot');
+const MinimalBot = require('./MinimalBot.6b6t.js');
 const botConfig = require('./config/bot_config.json');
 const mapArtOffsets = require('./config/mapart_offsets.js');
 

@@ -179,34 +179,40 @@ class MinimalBot {
         this._isFirstSpawn = false;
       }
 
-      if (this._options.auth == "offline" && this._options.host == "6b6t.org") {
+      // If captcha is required, solve it first and wait for completion.
+      if (this._options.auth === "offline" || this._options.host === "6b6t.org") {
         this.bot.chat(`/login ${this.options.password}`);
-        console.log("=== initiating Captcha Bypass ===");
-        setTimeout(() => {
-          //const goal = new this.goals.GoalBlock(-1000, 102, -988); // Spawn point coordinates
-          //this.pathfinder.setGoal(goal, true);
-          let movements = new this.movements(this.bot);
-          movements.allowSprinting = true;
-          movements.allowParkour = true;
-          movements.canDig = false; // Safer for servers
-          movements.digCost = 100; // Avoid digging
-          movements.placeCost = 100;
-          movements.allowEntityDetection = true;
-          movements.liquidCost = 2; // Avoid water when possible
-          this.bot.pathfinder.setMovements(movements);
-          this.startGreenWoolPath();
-          console.log("CAPTCHA STARTED! !!!!!!!!!!!!!!!!!!!!");
-        }, 3000);
+        console.log("=== Initiating Captcha Bypass ===");
+
+        // Wait a few seconds for the server to process the login and spawn entities
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        // Configure special movements for the captcha
+        const captchaMovements = new this.movements(this.bot);
+        captchaMovements.allowSprinting = true;
+        captchaMovements.allowParkour = true;
+        captchaMovements.canDig = false;
+        this.bot.pathfinder.setMovements(captchaMovements);
+
+        try {
+          console.log("CAPTCHA LOGIC STARTED! Waiting for completion...");
+          // Await the entire captcha process. The code will pause here.
+          await this.startGreenWoolPath();
+          console.log("✅ Captcha process successfully completed.");
+        } catch (error) {
+            console.error("❌ Captcha process failed:", error);
+            // You might want to handle this error, e.g., by disconnecting
+        }
+
+        // Reset to default movements after the captcha is done
+        this.bot.pathfinder.setMovements(new this.movements(this.bot));
+        // console lot bots current pos
+        console.log(this.bot.entity.position);
       }
-      await new Promise((resolve) => setTimeout(resolve, 30000));
-      this.bot.pathfinder.setMovements(new this.movements(this.bot));
-
-
-      // REMOVED: this._isReconnecting = false; // This was the cause of the bug.
 
       console.log(`${this.bot.username} has spawned.`);
       try {
-        // ADDED: Safety wrapper for custom initialization logic.
+        // This will now run *after* the captcha is finished.
         await this.initialize();
       } catch (err) {
         console.error("Error during custom initialization:", err);
@@ -214,7 +220,6 @@ class MinimalBot {
     });
 
     this.bot.on("kicked", (reason) => {
-      // ADDED: Better logging for JSON kick reasons.
       const reasonText =
         typeof reason === "string" ? reason : JSON.stringify(reason);
       console.log(`Bot was kicked for: ${reasonText}`);
@@ -222,7 +227,6 @@ class MinimalBot {
     });
 
     this.bot.on("end", (reason) => {
-      // Only handle 'end' if it wasn't preceded by a kick, as kick also causes an 'end' event.
       if (!this._isReconnecting) {
         console.log(`Bot has disconnected. Reason: ${reason || "N/A"}`);
         this.handleDisconnect("end");
@@ -231,7 +235,6 @@ class MinimalBot {
 
     this.bot.on("error", (err) => {
       console.error("Bot encountered an error:", err.message);
-      // An error can often lead to a disconnect, so we trigger the handler here too.
       this.handleDisconnect("error");
     });
   }
@@ -472,15 +475,15 @@ class MinimalBot {
 
       stepNumber++;
     }
-
-    const portalPos = { x: -1001, y: 101, z: -987 };
+    if(stepNumber>5)
+    {const portalPos = { x: -1001, y: 101, z: -987 };
     try {
       const goal = new this.goals.GoalBlock(portalPos.x, portalPos.y, portalPos.z);
       await this.bot.pathfinder.goto(goal);
       console.log("✅ Reached the portal area.");
     } catch (error) {
       console.log(`⚠️  Pathfinding to the portal failed:`, error.message);
-    }
+    }}
   }
 
   async startGreenWoolPath() {

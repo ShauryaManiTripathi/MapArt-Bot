@@ -40,13 +40,340 @@ function findClosestColor(r, g, b) {
     return closestColor;
 }
 
+// Dithering algorithms
+class DitheringAlgorithms {
+    // Floyd-Steinberg dithering (default)
+    static floydSteinberg(imageData, width, height) {
+        const data = new Array(height);
+        for (let i = 0; i < height; i++) {
+            data[i] = new Array(width);
+            for (let j = 0; j < width; j++) {
+                const pixelColor = Jimp.intToRGBA(imageData.getPixelColor(j, i));
+                data[i][j] = { r: pixelColor.r, g: pixelColor.g, b: pixelColor.b };
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const oldR = data[y][x].r;
+                const oldG = data[y][x].g;
+                const oldB = data[y][x].b;
+                
+                const closestColorName = findClosestColor(oldR, oldG, oldB);
+                const newColor = COLOR_MAP[closestColorName];
+                
+                data[y][x] = { r: newColor.r, g: newColor.g, b: newColor.b, colorName: closestColorName };
+                
+                const errorR = oldR - newColor.r;
+                const errorG = oldG - newColor.g;
+                const errorB = oldB - newColor.b;
+                
+                // Distribute error to neighboring pixels
+                if (x + 1 < width) {
+                    data[y][x + 1].r = Math.max(0, Math.min(255, data[y][x + 1].r + errorR * 7 / 16));
+                    data[y][x + 1].g = Math.max(0, Math.min(255, data[y][x + 1].g + errorG * 7 / 16));
+                    data[y][x + 1].b = Math.max(0, Math.min(255, data[y][x + 1].b + errorB * 7 / 16));
+                }
+                
+                if (y + 1 < height) {
+                    if (x - 1 >= 0) {
+                        data[y + 1][x - 1].r = Math.max(0, Math.min(255, data[y + 1][x - 1].r + errorR * 3 / 16));
+                        data[y + 1][x - 1].g = Math.max(0, Math.min(255, data[y + 1][x - 1].g + errorG * 3 / 16));
+                        data[y + 1][x - 1].b = Math.max(0, Math.min(255, data[y + 1][x - 1].b + errorB * 3 / 16));
+                    }
+                    
+                    data[y + 1][x].r = Math.max(0, Math.min(255, data[y + 1][x].r + errorR * 5 / 16));
+                    data[y + 1][x].g = Math.max(0, Math.min(255, data[y + 1][x].g + errorG * 5 / 16));
+                    data[y + 1][x].b = Math.max(0, Math.min(255, data[y + 1][x].b + errorB * 5 / 16));
+                    
+                    if (x + 1 < width) {
+                        data[y + 1][x + 1].r = Math.max(0, Math.min(255, data[y + 1][x + 1].r + errorR * 1 / 16));
+                        data[y + 1][x + 1].g = Math.max(0, Math.min(255, data[y + 1][x + 1].g + errorG * 1 / 16));
+                        data[y + 1][x + 1].b = Math.max(0, Math.min(255, data[y + 1][x + 1].b + errorB * 1 / 16));
+                    }
+                }
+            }
+        }
+        
+        return data;
+    }
+
+    static jarvisJudiceNinke(imageData, width, height) {
+        const data = new Array(height);
+        for (let i = 0; i < height; i++) {
+            data[i] = new Array(width);
+            for (let j = 0; j < width; j++) {
+                const pixelColor = Jimp.intToRGBA(imageData.getPixelColor(j, i));
+                data[i][j] = { r: pixelColor.r, g: pixelColor.g, b: pixelColor.b };
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const oldR = data[y][x].r;
+                const oldG = data[y][x].g;
+                const oldB = data[y][x].b;
+                
+                const closestColorName = findClosestColor(oldR, oldG, oldB);
+                const newColor = COLOR_MAP[closestColorName];
+                
+                data[y][x] = { r: newColor.r, g: newColor.g, b: newColor.b, colorName: closestColorName };
+                
+                const errorR = oldR - newColor.r;
+                const errorG = oldG - newColor.g;
+                const errorB = oldB - newColor.b;
+                
+                // Jarvis-Judice-Ninke error diffusion pattern
+                const diffusionPattern = [
+                    { dx: 1, dy: 0, weight: 7/48 },
+                    { dx: 2, dy: 0, weight: 5/48 },
+                    { dx: -2, dy: 1, weight: 3/48 },
+                    { dx: -1, dy: 1, weight: 5/48 },
+                    { dx: 0, dy: 1, weight: 7/48 },
+                    { dx: 1, dy: 1, weight: 5/48 },
+                    { dx: 2, dy: 1, weight: 3/48 },
+                    { dx: -2, dy: 2, weight: 1/48 },
+                    { dx: -1, dy: 2, weight: 3/48 },
+                    { dx: 0, dy: 2, weight: 5/48 },
+                    { dx: 1, dy: 2, weight: 3/48 },
+                    { dx: 2, dy: 2, weight: 1/48 }
+                ];
+                
+                for (const { dx, dy, weight } of diffusionPattern) {
+                    const newX = x + dx;
+                    const newY = y + dy;
+                    if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                        data[newY][newX].r = Math.max(0, Math.min(255, data[newY][newX].r + errorR * weight));
+                        data[newY][newX].g = Math.max(0, Math.min(255, data[newY][newX].g + errorG * weight));
+                        data[newY][newX].b = Math.max(0, Math.min(255, data[newY][newX].b + errorB * weight));
+                    }
+                }
+            }
+        }
+        
+        return data;
+    }
+
+    static stucki(imageData, width, height) {
+        const data = new Array(height);
+        for (let i = 0; i < height; i++) {
+            data[i] = new Array(width);
+            for (let j = 0; j < width; j++) {
+                const pixelColor = Jimp.intToRGBA(imageData.getPixelColor(j, i));
+                data[i][j] = { r: pixelColor.r, g: pixelColor.g, b: pixelColor.b };
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const oldR = data[y][x].r;
+                const oldG = data[y][x].g;
+                const oldB = data[y][x].b;
+                
+                const closestColorName = findClosestColor(oldR, oldG, oldB);
+                const newColor = COLOR_MAP[closestColorName];
+                
+                data[y][x] = { r: newColor.r, g: newColor.g, b: newColor.b, colorName: closestColorName };
+                
+                const errorR = oldR - newColor.r;
+                const errorG = oldG - newColor.g;
+                const errorB = oldB - newColor.b;
+                
+                // Stucki error diffusion pattern
+                const diffusionPattern = [
+                    { dx: 1, dy: 0, weight: 8/42 },
+                    { dx: 2, dy: 0, weight: 4/42 },
+                    { dx: -2, dy: 1, weight: 2/42 },
+                    { dx: -1, dy: 1, weight: 4/42 },
+                    { dx: 0, dy: 1, weight: 8/42 },
+                    { dx: 1, dy: 1, weight: 4/42 },
+                    { dx: 2, dy: 1, weight: 2/42 },
+                    { dx: -2, dy: 2, weight: 1/42 },
+                    { dx: -1, dy: 2, weight: 2/42 },
+                    { dx: 0, dy: 2, weight: 4/42 },
+                    { dx: 1, dy: 2, weight: 2/42 },
+                    { dx: 2, dy: 2, weight: 1/42 }
+                ];
+                
+                for (const { dx, dy, weight } of diffusionPattern) {
+                    const newX = x + dx;
+                    const newY = y + dy;
+                    if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                        data[newY][newX].r = Math.max(0, Math.min(255, data[newY][newX].r + errorR * weight));
+                        data[newY][newX].g = Math.max(0, Math.min(255, data[newY][newX].g + errorG * weight));
+                        data[newY][newX].b = Math.max(0, Math.min(255, data[newY][newX].b + errorB * weight));
+                    }
+                }
+            }
+        }
+        
+        return data;
+    }
+
+    static atkinson(imageData, width, height) {
+        const data = new Array(height);
+        for (let i = 0; i < height; i++) {
+            data[i] = new Array(width);
+            for (let j = 0; j < width; j++) {
+                const pixelColor = Jimp.intToRGBA(imageData.getPixelColor(j, i));
+                data[i][j] = { r: pixelColor.r, g: pixelColor.g, b: pixelColor.b };
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const oldR = data[y][x].r;
+                const oldG = data[y][x].g;
+                const oldB = data[y][x].b;
+                
+                const closestColorName = findClosestColor(oldR, oldG, oldB);
+                const newColor = COLOR_MAP[closestColorName];
+                
+                data[y][x] = { r: newColor.r, g: newColor.g, b: newColor.b, colorName: closestColorName };
+                
+                const errorR = oldR - newColor.r;
+                const errorG = oldG - newColor.g;
+                const errorB = oldB - newColor.b;
+                
+                // Atkinson error diffusion pattern
+                const diffusionPattern = [
+                    { dx: 1, dy: 0, weight: 1/8 },
+                    { dx: 2, dy: 0, weight: 1/8 },
+                    { dx: -1, dy: 1, weight: 1/8 },
+                    { dx: 0, dy: 1, weight: 1/8 },
+                    { dx: 1, dy: 1, weight: 1/8 },
+                    { dx: 0, dy: 2, weight: 1/8 }
+                ];
+                
+                for (const { dx, dy, weight } of diffusionPattern) {
+                    const newX = x + dx;
+                    const newY = y + dy;
+                    if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                        data[newY][newX].r = Math.max(0, Math.min(255, data[newY][newX].r + errorR * weight));
+                        data[newY][newX].g = Math.max(0, Math.min(255, data[newY][newX].g + errorG * weight));
+                        data[newY][newX].b = Math.max(0, Math.min(255, data[newY][newX].b + errorB * weight));
+                    }
+                }
+            }
+        }
+        
+        return data;
+    }
+
+    static sierra(imageData, width, height) {
+        const data = new Array(height);
+        for (let i = 0; i < height; i++) {
+            data[i] = new Array(width);
+            for (let j = 0; j < width; j++) {
+                const pixelColor = Jimp.intToRGBA(imageData.getPixelColor(j, i));
+                data[i][j] = { r: pixelColor.r, g: pixelColor.g, b: pixelColor.b };
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const oldR = data[y][x].r;
+                const oldG = data[y][x].g;
+                const oldB = data[y][x].b;
+                
+                const closestColorName = findClosestColor(oldR, oldG, oldB);
+                const newColor = COLOR_MAP[closestColorName];
+                
+                data[y][x] = { r: newColor.r, g: newColor.g, b: newColor.b, colorName: closestColorName };
+                
+                const errorR = oldR - newColor.r;
+                const errorG = oldG - newColor.g;
+                const errorB = oldB - newColor.b;
+                
+                // Sierra error diffusion pattern
+                const diffusionPattern = [
+                    { dx: 1, dy: 0, weight: 5/32 },
+                    { dx: 2, dy: 0, weight: 3/32 },
+                    { dx: -2, dy: 1, weight: 2/32 },
+                    { dx: -1, dy: 1, weight: 4/32 },
+                    { dx: 0, dy: 1, weight: 5/32 },
+                    { dx: 1, dy: 1, weight: 4/32 },
+                    { dx: 2, dy: 1, weight: 2/32 },
+                    { dx: -1, dy: 2, weight: 2/32 },
+                    { dx: 0, dy: 2, weight: 3/32 },
+                    { dx: 1, dy: 2, weight: 2/32 }
+                ];
+                
+                for (const { dx, dy, weight } of diffusionPattern) {
+                    const newX = x + dx;
+                    const newY = y + dy;
+                    if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                        data[newY][newX].r = Math.max(0, Math.min(255, data[newY][newX].r + errorR * weight));
+                        data[newY][newX].g = Math.max(0, Math.min(255, data[newY][newX].g + errorG * weight));
+                        data[newY][newX].b = Math.max(0, Math.min(255, data[newY][newX].b + errorB * weight));
+                    }
+                }
+            }
+        }
+        
+        return data;
+    }
+
+    static burkes(imageData, width, height) {
+        const data = new Array(height);
+        for (let i = 0; i < height; i++) {
+            data[i] = new Array(width);
+            for (let j = 0; j < width; j++) {
+                const pixelColor = Jimp.intToRGBA(imageData.getPixelColor(j, i));
+                data[i][j] = { r: pixelColor.r, g: pixelColor.g, b: pixelColor.b };
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const oldR = data[y][x].r;
+                const oldG = data[y][x].g;
+                const oldB = data[y][x].b;
+                
+                const closestColorName = findClosestColor(oldR, oldG, oldB);
+                const newColor = COLOR_MAP[closestColorName];
+                
+                data[y][x] = { r: newColor.r, g: newColor.g, b: newColor.b, colorName: closestColorName };
+                
+                const errorR = oldR - newColor.r;
+                const errorG = oldG - newColor.g;
+                const errorB = oldB - newColor.b;
+                
+                // Burkes error diffusion pattern
+                const diffusionPattern = [
+                    { dx: 1, dy: 0, weight: 8/32 },
+                    { dx: 2, dy: 0, weight: 4/32 },
+                    { dx: -2, dy: 1, weight: 2/32 },
+                    { dx: -1, dy: 1, weight: 4/32 },
+                    { dx: 0, dy: 1, weight: 8/32 },
+                    { dx: 1, dy: 1, weight: 4/32 },
+                    { dx: 2, dy: 1, weight: 2/32 }
+                ];
+                
+                for (const { dx, dy, weight } of diffusionPattern) {
+                    const newX = x + dx;
+                    const newY = y + dy;
+                    if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                        data[newY][newX].r = Math.max(0, Math.min(255, data[newY][newX].r + errorR * weight));
+                        data[newY][newX].g = Math.max(0, Math.min(255, data[newY][newX].g + errorG * weight));
+                        data[newY][newX].b = Math.max(0, Math.min(255, data[newY][newX].b + errorB * weight));
+                    }
+                }
+            }
+        }
+        
+        return data;
+    }
+}
+
 class ImageProcessor {
     /**
      * Processes an image from a local file path or a URL.
      * @param {string} imageSource - The local file name (in ./assets) or a public URL to the image.
+     * @param {string} ditheringMethod - The dithering method to use ('floydSteinberg' by default)
      * @returns {Promise<Array<Array<object>>|null>} A 128x128 2D array representing the map art plan, or null on failure.
      */
-    static async processImage(imageSource) {
+    static async processImage(imageSource, ditheringMethod = 'floydSteinberg') {
         let image;
         try {
             // Check if the source is a URL
@@ -63,23 +390,74 @@ class ImageProcessor {
                 image = await Jimp.read(localPath);
             }
             
+            // Resize and rotate by 180 degrees BEFORE processing
             image.resize(128, 128);
+            image.rotate(180);
+            
+            // Apply dithering
+            let ditheredData;
+            switch (ditheringMethod) {
+                case 'floydSteinberg':
+                    ditheredData = DitheringAlgorithms.floydSteinberg(image, 128, 128);
+                    break;
+                case 'jarvisJudiceNinke':
+                    ditheredData = DitheringAlgorithms.jarvisJudiceNinke(image, 128, 128);
+                    break;
+                case 'stucki':
+                    ditheredData = DitheringAlgorithms.stucki(image, 128, 128);
+                    break;
+                case 'atkinson':
+                    ditheredData = DitheringAlgorithms.atkinson(image, 128, 128);
+                    break;
+                case 'sierra':
+                    ditheredData = DitheringAlgorithms.sierra(image, 128, 128);
+                    break;
+                case 'burkes':
+                    ditheredData = DitheringAlgorithms.burkes(image, 128, 128);
+                    break;
+                default:
+                    console.log(`Unknown dithering method: ${ditheringMethod}. Using Floyd-Steinberg.`);
+                    ditheredData = DitheringAlgorithms.floydSteinberg(image, 128, 128);
+            }
 
+            // Create image from dithered data for saving
+            const ditheredImage = new Jimp(128, 128);
+            for (let y = 0; y < 128; y++) {
+                for (let x = 0; x < 128; x++) {
+                    const pixel = ditheredData[y][x];
+                    const color = Jimp.rgbaToInt(pixel.r, pixel.g, pixel.b, 255);
+                    ditheredImage.setPixelColor(color, x, y);
+                }
+            }
+            await ditheredImage.writeAsync(`assets/debug_dithered.png`);
+
+            // Convert dithered data to the expected format
             const imageData = Array.from({ length: 128 }, () => Array(128).fill(null));
 
             for (let z = 0; z < 128; z++) {
                 for (let x = 0; x < 128; x++) {
-                    const pixelColor = Jimp.intToRGBA(image.getPixelColor(x, z));
-                    const closestColorName = findClosestColor(pixelColor.r, pixelColor.g, pixelColor.b);
+                    const colorName = ditheredData[z][x].colorName;
                     imageData[z][x] = {
-                        name: closestColorName,
-                        id: COLOR_MAP[closestColorName].id,
+                        name: colorName,
+                        id: COLOR_MAP[colorName].id,
                         placed_correctly: false // Default to false
                     };
                 }
             }
 
-            console.log(`Image "${imageSource}" processed successfully.`);
+            // Create image from final color mapped data
+            const finalImage = new Jimp(128, 128);
+            for (let z = 0; z < 128; z++) {
+                for (let x = 0; x < 128; x++) {
+                    const colorName = imageData[z][x].name;
+                    const color = COLOR_MAP[colorName];
+                    const pixelColor = Jimp.rgbaToInt(color.r, color.g, color.b, 255);
+                    finalImage.setPixelColor(pixelColor, x, z);
+                }
+            }
+            await finalImage.writeAsync(`assets/debug_final.png`);
+
+            console.log(`Image "${imageSource}" processed successfully with ${ditheringMethod} dithering.`);
             return imageData;
         } catch (error) {
             console.error(`Failed to process image: ${error.message}`);
