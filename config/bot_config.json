@@ -1,11 +1,12 @@
 {
-  "host": "shaurya43544-z1zg.aternos.me",
-  "port": 48687,
-  "username": "MapArtBot",
+  "host": "6b6t.org",
+  "port": 25565,
+  "username": "USERNAME",
+  "password": "PASSWORD",
   "auth": "offline",
   "version": "1.20.4",
   "brand": "fabric",
-  "master_username": "Zoombam",
+  "master_username": "OWNER_USERNAME",
   "plugins": {
     "pathfinder": true,
     "tool": true
