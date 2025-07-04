@@ -69,20 +69,6 @@ class Restocker {
     }
 
     /**
-     * Moves the bot to the designated idle/discard location without dropping items.
-     */
-    async goToDiscardLocation() {
-        const discardPos = this.mapArtOrigin.plus(this.discardOffset);
-        console.log(`[${this.bot.username}] Moving to idle/discard location at ${discardPos}.`);
-        try {
-            const goal = new GoalNear(discardPos.x, discardPos.y, discardPos.z, 1);
-            await this.bot.pathfinder.goto(goal);
-        } catch (err) {
-            console.error(`[${this.bot.username}] Error moving to discard location: ${err.message}`);
-        }
-    }
-
-    /**
      * Gathers the required items from the storage chests.
      * @param {object} requiredItems - An object of item IDs and counts, e.g., { 'white_carpet': 64 }.
      * @returns {Promise<boolean>} - True if all items were successfully gathered, false otherwise.
