@@ -8,11 +8,16 @@ class MapArtBot extends MinimalBot {
   /**
    * @param {object} options - Bot configuration options.
    * @param {import('./src/utils/DatabaseManager')} db - The database manager instance.
+   * @param {number} botIndex - The unique index of this bot worker.
+   * @param {number} totalBots - The total number of bots in the pool.
    */
-  constructor(options, db) {
+  constructor(options, db, botIndex, totalBots) {
     super(options);
 
     this.db = db;
+    this.botIndex = botIndex;
+    this.totalBots = totalBots;
+
     this.state = "IDLE"; // IDLE, CLAIMING, BUILDING, RESTOCKING
     this.currentStripIndex = null;
     this.shouldRun = true;
@@ -70,7 +75,7 @@ class MapArtBot extends MinimalBot {
       // --- Claiming State ---
       if (this.currentStripIndex === null) {
         this.state = "CLAIMING";
-        const claimedStrip = await this.db.claimStrip(this.bot.username);
+        const claimedStrip = await this.db.claimStrip(this.bot.username, this.botIndex, this.totalBots);
 
         if (claimedStrip !== null) {
           this.currentStripIndex = claimedStrip;
@@ -84,7 +89,7 @@ class MapArtBot extends MinimalBot {
               console.log(`[${this.bot.username}] All strips are complete. Shutting down.`);
               this.shutdown();
           } else {
-              console.log(`[${this.bot.username}] No pending strips to claim. Waiting...`);
+              // console.log(`[${this.bot.username}] No pending strips to claim. Waiting...`);
           }
         }
         continue;

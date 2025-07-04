@@ -97,21 +97,60 @@ class DatabaseManager {
         await this.db.run('UPDATE project SET is_paused = ? WHERE id = 1', [isPaused ? 1 : 0]);
     }
 
-    async claimStrip(botUsername) {
-        const result = await this.db.get("SELECT strip_index FROM strips WHERE status = 'pending' ORDER BY strip_index ASC LIMIT 1");
-        if (!result) {
-            return null; // No pending strips
+    async claimStrip(botUsername, botIndex, totalBots) {
+        const project = await this.getProjectState();
+        if (!project) return null;
+    
+        const { total_strips } = project;
+        const stripsPerBot = Math.ceil(total_strips / totalBots);
+        const startStrip = botIndex * stripsPerBot;
+        const endStrip = Math.min(startStrip + stripsPerBot, total_strips);
+    
+        // --- Find a candidate strip ---
+        // 1. Look in this bot's designated "home" zone first.
+        let candidate = await this.db.get(
+            `SELECT strip_index FROM strips 
+             WHERE status = 'pending' AND strip_index >= ? AND strip_index < ?
+             ORDER BY strip_index ASC 
+             LIMIT 1`,
+            [startStrip, endStrip]
+        );
+    
+        // 2. If its zone is done, look for any other available strip to help out.
+        if (!candidate) {
+            candidate = await this.db.get(
+                `SELECT strip_index FROM strips 
+                 WHERE status = 'pending'
+                 ORDER BY strip_index ASC 
+                 LIMIT 1`
+            );
         }
         
-        const { strip_index } = result;
-        await this.db.run(
-            `UPDATE strips SET status = 'assigned', assigned_to = ?, assigned_at = CURRENT_TIMESTAMP WHERE strip_index = ? AND status = 'pending'`,
+        if (!candidate) {
+            return null; // No pending strips are available anywhere on the map.
+        }
+    
+        const { strip_index } = candidate;
+    
+        // --- Atomically claim the candidate strip ---
+        // This UPDATE will only succeed if the strip is still 'pending'.
+        // If another bot claimed it between our SELECT and this UPDATE, `changes` will be 0.
+        const result = await this.db.run(
+            `UPDATE strips SET status = 'assigned', assigned_to = ?, assigned_at = CURRENT_TIMESTAMP 
+             WHERE strip_index = ? AND status = 'pending'`,
             [botUsername, strip_index]
         );
-        
-        // Verify we got it
-        const final = await this.db.get('SELECT assigned_to FROM strips WHERE strip_index = ?', [strip_index]);
-        return final.assigned_to === botUsername ? strip_index : null;
+    
+        if (result.changes > 0) {
+            // Success! We claimed the strip.
+            console.log(`[DB] Bot ${botUsername} claimed strip ${strip_index}.`);
+            return strip_index;
+        } else {
+            // The strip was claimed by another process (a race condition). This is expected.
+            // The bot will simply try again on its next cycle.
+            console.warn(`[DB] Bot ${botUsername} failed to claim strip ${strip_index} (race condition).`);
+            return null;
+        }
     }
 
     async releaseStrip(stripIndex) {

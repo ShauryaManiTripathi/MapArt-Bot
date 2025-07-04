@@ -33,9 +33,20 @@ async function launchBots() {
         return;
     }
 
-    console.log(`Launching ${botConfigs.length} bot(s)...`);
-    botConfigs.forEach(botConfig => {
-        const child = fork(WORKER_PATH, [JSON.stringify(botConfig), DB_PATH], {
+    const totalBots = botConfigs.length;
+    if (totalBots === 0) {
+        console.error("No bots defined in config/bots.json. Aborting.");
+        return;
+    }
+
+    console.log(`Launching ${totalBots} bot(s)...`);
+    botConfigs.forEach((botConfig, index) => {
+        const child = fork(WORKER_PATH, [
+            JSON.stringify(botConfig), 
+            DB_PATH, 
+            index.toString(),          // Pass bot's index
+            totalBots.toString()       // Pass total number of bots
+        ], {
             stdio: 'inherit'
         });
         childProcesses.push(child);

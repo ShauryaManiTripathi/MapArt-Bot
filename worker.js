@@ -4,15 +4,18 @@ const DatabaseManager = require('./src/utils/DatabaseManager.js');
 // This script is executed by the main `run.js` process for each bot.
 
 (async () => {
-    if (process.argv.length < 4) {
-        console.error('Worker requires bot config and DB path as arguments.');
+    if (process.argv.length < 6) {
+        console.error('Worker requires bot config, DB path, bot index, and total bots as arguments.');
         process.exit(1);
     }
-    // The bot's specific configuration is passed as a command-line argument
+    // Arguments are passed from the main `run.js` process
     const botConfig = JSON.parse(process.argv[2]);
     const dbPath = process.argv[3];
+    const botIndex = parseInt(process.argv[4], 10);
+    const totalBots = parseInt(process.argv[5], 10);
 
-    console.log(`[Worker ${botConfig.username}] Starting...`);
+
+    console.log(`[Worker ${botConfig.username}] Starting with index ${botIndex}/${totalBots}...`);
     
     let botInstance;
 
@@ -20,7 +23,7 @@ const DatabaseManager = require('./src/utils/DatabaseManager.js');
         const db = new DatabaseManager(dbPath);
         await db.init();
 
-        botInstance = new MapArtBot(botConfig, db);
+        botInstance = new MapArtBot(botConfig, db, botIndex, totalBots);
         
         // Graceful shutdown
         process.on('SIGINT', () => {
