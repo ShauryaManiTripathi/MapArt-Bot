@@ -18,7 +18,7 @@ class MapArtBot extends MinimalBot {
     this.botIndex = botIndex;
     this.totalBots = totalBots;
 
-    this.state = "IDLE"; // IDLE, CLAIMING, BUILDING, RESTOCKING
+    this.state = "IDLE"; // IDLE, CLAIMING, BUILDING, RESTOCKING, WAITING_FOR_STRIP
     this.currentStripIndex = null;
     this.shouldRun = true;
 
@@ -31,11 +31,14 @@ class MapArtBot extends MinimalBot {
     await super.initialize();
     this.mcData = require("minecraft-data")(this.bot.version);
 
-    // Pass db instance to modules that need it
     this.restocker = new Restocker(this.bot, this.mcData, mapArtOffsets);
     this.stripPlacer = new StripPlacer(this.bot, this.mcData, mapArtOffsets, this.db);
 
-    console.log(`[${this.bot.username}] Connected and ready for tasks.`);
+    const waitSeconds = 10 * this.botIndex;
+    if (waitSeconds > 0) {
+      console.log(`[${this.bot.username}] Connected. Waiting for ${waitSeconds}s before starting...`);
+      await this.bot.waitForTicks(20 * waitSeconds);
+    }
 
     this.mainLoop(); // Start the main logic loop
   }
@@ -74,20 +77,24 @@ class MapArtBot extends MinimalBot {
 
       // --- Claiming State ---
       if (this.currentStripIndex === null) {
-        this.state = "CLAIMING";
         const claimedStrip = await this.db.claimStrip(this.bot.username, this.botIndex, this.totalBots);
 
         if (claimedStrip !== null) {
           this.currentStripIndex = claimedStrip;
           this.state = "BUILDING";
           console.log(`[${this.bot.username}] Claimed strip ${this.currentStripIndex}. Starting work.`);
-          this.stripPlacer.continue(); // Ensure placer is not paused from previous state
+          this.stripPlacer.continue();
         } else {
           // No strips available. The map might be done or others are working.
           const stats = await this.db.getCompletionStats();
           if (stats.pending_strips === 0 && stats.assigned_strips === 0) {
               console.log(`[${this.bot.username}] All strips are complete. Shutting down.`);
               this.shutdown();
+          } else if (this.state !== 'WAITING_FOR_STRIP') {
+              // Go to a safe waiting spot if not already there.
+              console.log(`[${this.bot.username}] No pending strips to claim. Moving to idle location.`);
+              this.state = 'WAITING_FOR_STRIP';
+              await this.restocker.goToDiscardLocation();
           } else {
               // console.log(`[${this.bot.username}] No pending strips to claim. Waiting...`);
           }
