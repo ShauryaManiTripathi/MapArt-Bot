@@ -1,5 +1,5 @@
 const mapArtOffsets = {
-  start: [0, 283, 0], // change this start coordinates of map 
+  start: [63, 281, 575], // change this start coordinates of map 
   offsets: {
     end: [-127, 0, -127],
     white: [
