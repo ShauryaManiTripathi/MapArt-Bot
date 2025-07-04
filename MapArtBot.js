@@ -189,6 +189,7 @@ class MapArtBot extends MinimalBot {
       if (this.state === "BUILDING") {
         const required =
           this.progressManager.getRequiredMaterialsForCurrentStrip();
+          console.log("REQUIRED",JSON.stringify(required));
         if (Object.keys(required).length === 0) {
           // Strip is done, advance to next
           await this.progressManager.completeCurrentStrip();
@@ -201,7 +202,8 @@ class MapArtBot extends MinimalBot {
           );
           this.state = "RESTOCKING";
         } else {
-          await this.stripPlacer.buildCurrentStrip();
+          const isComplete = await this.stripPlacer.buildCurrentStrip();
+          if(isComplete) await this.progressManager.completeCurrentStrip();
           // After buildStrip returns, the loop will re-evaluate.
         }
       }

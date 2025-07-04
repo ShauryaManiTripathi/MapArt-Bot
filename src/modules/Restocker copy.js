@@ -24,26 +24,6 @@ class Restocker {
         this.discardOffset = new Vec3(1, 0, 2); // 5 blocks away from the mapart corner
         this.discardPitch = -Math.PI / 4; // Look straight down
         this.discardYaw = -90;
-
-        // Define the order of colors for restocking (based on chest positions)
-        this.restockOrder = [
-            'white',
-            'light_gray',
-            'gray', 
-            'black',
-            'brown',
-            'red',
-            'orange',
-            'yellow',
-            'lime',
-            'green',
-            'cyan',
-            'light_blue',
-            'blue',
-            'purple',
-            'magenta',
-            'pink'
-        ];
     }
 
     /**
@@ -80,19 +60,17 @@ class Restocker {
         const needed = { ...requiredItems };
         let allItemsFound = true;
 
-        // Restock in the predefined order
-        for (const colorName of this.restockOrder) {
-            const colorKey = colorName.replace(' ', '_');
-            const itemId = ImageProcessor.COLOR_MAP[colorKey]?.id;
-            
-            if (!itemId || !needed[itemId]) {
-                continue; // Skip if this color isn't needed
-            }
-
+        for (const itemId in needed) {
             const amountNeeded = needed[itemId];
             if (amountNeeded <= 0) continue;
 
-            const chestOffsetInfo = this.mapArtOffsets.offsets[colorKey];
+            const colorName = ID_TO_COLOR_NAME[itemId];
+            if (!colorName) {
+                console.warn(`[Restocker] Unknown item ID for restock: ${itemId}`);
+                continue;
+            }
+
+            const chestOffsetInfo = this.mapArtOffsets.offsets[colorName.replace(' ', '_')];
             if (!chestOffsetInfo || chestOffsetInfo.length === 0) {
                 console.error(`[Restocker] No chest offset defined for color: ${colorName}`);
                 allItemsFound = false;
