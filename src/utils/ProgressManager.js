@@ -149,22 +149,23 @@ class ProgressManager {
   //  * Calculates the required materials for the remaining blocks in the current strip.
   //  * @returns {object} An object with carpet IDs as keys and required counts as values, e.g., { "white_carpet": 64, "red_carpet": 12 }
   //  */
-  // getRequiredMaterialsForCurrentStrip() {
-  //   const requiredMaterials = {};
-  //   const placements = this.getPlacementsForCurrentStrip();
+  getRequiredMaterialsForCurrentStrip() {
+    const requiredMaterials = {};
+    const placements = this.getPlacementsForCurrentStrip();
 
-  //   for (const placement of placements) {
-  //     requiredMaterials[placement.id] =
-  //       (requiredMaterials[placement.id] || 0) + 1;
-  //   }
-  //   return requiredMaterials;
-  // }
+    for (const placement of placements) {
+      requiredMaterials[placement.id] =
+        (requiredMaterials[placement.id] || 0) + 1;
+    }
+    let xxx = [requiredMaterials,0]
+    return xxx[0];
+  }
   /**
    * Calculates the required materials for multiple strips starting from current strip,
    * optimizing to fill up the 27 inventory slots (64 items per slot max).
    * @returns {object} An object with carpet IDs as keys and required counts as values, e.g., { "white_carpet": 64, "red_carpet": 12 }
    */
-  getRequiredMaterialsForCurrentStrip() {
+  getRequiredMaterialsForMultipleStrip() {
     if (!this.state.isActive || !this.state.imageData) {
       return {};
     }
@@ -174,8 +175,9 @@ class ProgressManager {
     const requiredMaterials = {};
 
     // Start from current strip and go forward
+    let stripIndex;
     for (
-      let stripIndex = this.state.currentStripIndex;
+      stripIndex = this.state.currentStripIndex;
       stripIndex < TOTAL_STRIPS;
       stripIndex++
     ) {
@@ -220,7 +222,8 @@ class ProgressManager {
       }
     }
 
-    return requiredMaterials;
+    let xxx =  [requiredMaterials,stripIndex-this.state.currentStripIndex-1];
+    return xxx[0];
   }
 
   /**

@@ -48,7 +48,7 @@ class StripPlacer {
      * @param {Array<object>} placements - The list of placements for the strip.
      * @returns {Array<Array<object>>} - Array of batches, each containing 2 rows of placements.
      */
-    _groupIntoTwoRowBatches(placements) {
+    _groupIntoFourRowBatches(placements) {
         // Group placements by their X coordinate (rows)
         const rows = placements.reduce((acc, p) => {
             acc[p.x] = acc[p.x] || [];
@@ -60,7 +60,7 @@ class StripPlacer {
         const sortedRowKeys = Object.keys(rows).sort((a, b) => a - b);
         const batches = [];
 
-        for (let i = 0; i < sortedRowKeys.length; i += 2) {
+        for (let i = 0; i < sortedRowKeys.length; i += 4) {
             const batch = [];
             
             // Add first row
@@ -70,6 +70,16 @@ class StripPlacer {
             // Add second row if it exists
             if (i + 1 < sortedRowKeys.length) {
                 const secondRow = rows[sortedRowKeys[i + 1]].sort((a, b) => a.z - b.z);
+                batch.push(...secondRow);
+            }
+
+            if (i + 2 < sortedRowKeys.length) {
+                const secondRow = rows[sortedRowKeys[i + 2]].sort((a, b) => a.z - b.z);
+                batch.push(...secondRow);
+            }
+
+            if (i + 3 < sortedRowKeys.length) {
+                const secondRow = rows[sortedRowKeys[i + 3]].sort((a, b) => a.z - b.z);
                 batch.push(...secondRow);
             }
             
@@ -258,7 +268,7 @@ for (const placement of batch) {
             return true;
         }
 
-        const batches = this._groupIntoTwoRowBatches(placements);
+        const batches = this._groupIntoFourRowBatches(placements);
         console.log(`Starting to build strip with ${batches.length} batches (${placements.length} blocks total).`);
 
         for (let i = 0; i < batches.length; i++) {
