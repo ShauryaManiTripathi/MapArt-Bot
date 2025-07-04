@@ -1,240 +1,154 @@
 const MinimalBot = require("./MinimalBot.js");
-const botConfig = require("./config/bot_config.json");
 const mapArtOffsets = require("./config/mapart_offsets.js");
 
-const ProgressManager = require("./src/utils/ProgressManager");
-const ImageProcessor = require("./src/utils/ImageProcessor");
 const Restocker = require("./src/modules/Restocker");
 const StripPlacer = require("./src/modules/StripPlacer");
 
 class MapArtBot extends MinimalBot {
-  constructor(options) {
+  /**
+   * @param {object} options - Bot configuration options.
+   * @param {import('./src/utils/DatabaseManager')} db - The database manager instance.
+   */
+  constructor(options, db) {
     super(options);
 
-    this.state = "IDLE"; // IDLE, BUILDING, RESTOCKING, PAUSED
-    this.master = options.master_username;
-    this.mcData = null; // FIX: Initialize mcData as a class property
+    this.db = db;
+    this.state = "IDLE"; // IDLE, CLAIMING, BUILDING, RESTOCKING
+    this.currentStripIndex = null;
+    this.shouldRun = true;
 
-    this.progressManager = new ProgressManager();
-    this.restocker = null; // Initialized on spawn
-    this.stripPlacer = null; // Initialized on spawn
+    this.mcData = null;
+    this.restocker = null;
+    this.stripPlacer = null;
   }
 
   async initialize() {
     await super.initialize();
-    // FIX: Assign to the class property `this.mcData`
     this.mcData = require("minecraft-data")(this.bot.version);
 
-    // Now pass `this.mcData` to the other modules
+    // Pass db instance to modules that need it
     this.restocker = new Restocker(this.bot, this.mcData, mapArtOffsets);
-    this.stripPlacer = new StripPlacer(
-      this.bot,
-      this.mcData,
-      mapArtOffsets,
-      this.progressManager
-    );
+    this.stripPlacer = new StripPlacer(this.bot, this.mcData, mapArtOffsets, this.db);
 
-    await this.progressManager.load();
-
-    this.bot.on("chat", (username, message) => {
-      if (username !== this.master) return;
-      this.handleCommand(message.trim());
-    });
-
-    this.bot.chat(
-      `/msg ${this.master} MapArtBot connected and ready for commands.`
-    );
-    console.log(`Listening for commands from: ${this.master}`);
-
-    // Check if we need to resume work on connect
-    const progress = this.progressManager.get();
-    if (progress.isActive && !progress.isPaused) {
-      this.state = "BUILDING";
-      this.bot.chat(`/msg ${this.master} Resuming previous map art project.`);
-    }
+    console.log(`[${this.bot.username}] Connected and ready for tasks.`);
 
     this.mainLoop(); // Start the main logic loop
   }
-
-  // --- Command Handlers ---
-  async handleCommand(message) {
-    const [command, ...args] = message.split(" ");
-
-    switch (command.toLowerCase()) {
-      case "start":
-        this.handleStart(args.join(" "));
-        break;
-      case "pause":
-        this.handlePause();
-        break;
-      case "continue":
-        this.handleContinue();
-        break;
-      case "clear":
-        this.handleClear();
-        break;
-      case "status":
-        this.handleStatus();
-        break;
-      default:
-        this.bot.chat(
-          `/msg ${this.master} Unknown command. Try: start, pause, continue, clear, status.`
-        );
-    }
-  }
-
-    async handleStart(imageSource, ditheringAlgorithm) {
-        if (this.state !== 'IDLE') {
-            return this.bot.chat(
-                `/msg ${this.master} A project is already active. Use 'clear' first.`
-            );
-        }
-        if (!imageSource) {
-            return this.bot.chat(
-                `/msg ${this.master} Usage: start <url_or_file> [dithering_algorithm], Valid options are: ${validAlgorithms.join(', ')}`
-            );
-        }
-
-        const validAlgorithms = [
-            'floydSteinberg', 'jarvisJudiceNinke', 'stucki',
-            'atkinson', 'sierra', 'burkes'
-        ];
-
-
-        // If an algorithm is provided, validate it.
-        if (ditheringAlgorithm && !validAlgorithms.includes(ditheringAlgorithm)) {
-            this.bot.chat(`/msg ${this.master} Invalid dithering algorithm: "${ditheringAlgorithm}".`);
-            this.bot.chat(`/msg ${this.master} Valid options are: ${validAlgorithms.join(', ')}`);
-            return;
-        }
-        
-        // Use the provided algorithm, or the default if none is given.
-        const algoToUse = ditheringAlgorithm || 'floydSteinberg';
-        this.bot.chat(
-            `/msg ${this.master} Processing image: ${imageSource} with ${algoToUse} dithering. Valid options are: ${validAlgorithms.join(', ')}`
-        );
-
-        const imageData = await ImageProcessor.processImage(imageSource, algoToUse);
-
-        if (!imageData) {
-            return this.bot.chat(`/msg ${this.master} Failed to process the image.`);
-        }
-        
-        await this.progressManager.startNewMapArt(imageSource, imageData);
-        this.bot.chat(
-            `/msg ${this.master} New map art started. Beginning construction.`
-        );
-        this.state = 'BUILDING';
-    }
-
-
-  handlePause() {
-    if (this.state !== "BUILDING" && this.state !== "RESTOCKING") {
-      return this.bot.chat(`/msg ${this.master} Nothing to pause.`);
-    }
-    this.state = "PAUSED";
-    this.stripPlacer.pause();
-    this.bot.chat(`/msg ${this.master} Paused the current task.`);
-  }
-
-  handleContinue() {
-    if (this.state !== "PAUSED") {
-      return this.bot.chat(`/msg ${this.master} Nothing is paused.`);
-    }
-    const progress = this.progressManager.get();
-    if (progress.isActive) {
-      this.state = "BUILDING"; // Always go back to building state to re-evaluate
-      this.stripPlacer.continue();
-      this.bot.chat(`/msg ${this.master} Resuming task.`);
-    } else {
-      this.bot.chat(`/msg ${this.master} Cannot continue, no active project.`);
-    }
-  }
-
-  async handleClear() {
-    this.state = "IDLE";
-    this.stripPlacer.stop();
-    await this.progressManager.clear();
-    this.bot.chat(`/msg ${this.master} Project progress has been cleared.`);
-  }
-
-  handleStatus() {
-    const progress = this.progressManager.get();
-    if (!progress.isActive) {
-      return this.bot.chat(
-        `/msg ${this.master} No active project. Current state: ${this.state}.`
-      );
-    }
-    const percentage = this.progressManager
-      .getCompletionPercentage()
-      .toFixed(2);
-    this.bot.chat(
-      `/msg ${this.master} Status: ${this.state} | Image: ${progress.imageSource} | Strip: ${progress.currentStripIndex} | Overall Progress: ${percentage}%`
-    );
+  
+  shutdown() {
+      this.shouldRun = false;
+      this.stripPlacer.stop();
+      if (this.currentStripIndex !== null) {
+          console.log(`[${this.bot.username}] Releasing strip ${this.currentStripIndex} due to shutdown.`);
+          this.db.releaseStrip(this.currentStripIndex);
+      }
+      this.disconnect();
   }
 
   // --- Main Logic Loop ---
   async mainLoop() {
-    while (true) {
+    while (this.shouldRun) {
       await this.bot.waitForTicks(20); // Loop runs every second
-      if (this.state === "IDLE" || this.state === "PAUSED") continue;
 
-      const progress = this.progressManager.get();
-      if (!progress.isActive) {
-        this.state = "IDLE";
-        this.bot.chat(`/msg ${this.master} Map art is complete!`);
+      const projectState = await this.db.getProjectState();
+
+      if (!projectState || !projectState.is_active || projectState.is_paused) {
+        if (this.state !== "IDLE") {
+          console.log(`[${this.bot.username}] Project is paused or inactive. Idling.`);
+          this.state = "IDLE";
+          this.stripPlacer.pause();
+        }
         continue;
       }
+      
+      // If we were paused and are now continuing
+      if (this.state === "IDLE" && this.currentStripIndex !== null) {
+          this.state = "BUILDING"; // Go back to building the strip we already have
+          this.stripPlacer.continue();
+      }
 
+      // --- Claiming State ---
+      if (this.currentStripIndex === null) {
+        this.state = "CLAIMING";
+        const claimedStrip = await this.db.claimStrip(this.bot.username);
+
+        if (claimedStrip !== null) {
+          this.currentStripIndex = claimedStrip;
+          this.state = "BUILDING";
+          console.log(`[${this.bot.username}] Claimed strip ${this.currentStripIndex}. Starting work.`);
+          this.stripPlacer.continue(); // Ensure placer is not paused from previous state
+        } else {
+          // No strips available. The map might be done or others are working.
+          const stats = await this.db.getCompletionStats();
+          if (stats.pending_strips === 0 && stats.assigned_strips === 0) {
+              console.log(`[${this.bot.username}] All strips are complete. Shutting down.`);
+              this.shutdown();
+          } else {
+              console.log(`[${this.bot.username}] No pending strips to claim. Waiting...`);
+          }
+        }
+        continue;
+      }
+      
+      // --- Building State ---
       if (this.state === "BUILDING") {
-        const required =
-          this.progressManager.getRequiredMaterialsForCurrentStrip();
-          console.log("REQUIRED",JSON.stringify(required));
+        const required = await this.getRequiredMaterialsForStrip(this.currentStripIndex);
         if (Object.keys(required).length === 0) {
-          // Strip is done, advance to next
-          await this.progressManager.completeCurrentStrip();
-          continue; // Re-run loop for the new strip
+          // Strip is done, complete it and go back to claiming
+          console.log(`[${this.bot.username}] Finished building strip ${this.currentStripIndex}.`);
+          await this.db.completeStrip(this.currentStripIndex);
+          this.currentStripIndex = null;
+          this.state = "CLAIMING";
+          continue;
         }
 
         if (!this._hasMaterials(required)) {
-          this.bot.chat(
-            `/msg ${this.master} Insufficient materials for current strip. Switching to restock mode.`
-          );
+          console.log(`[${this.bot.username}] Insufficient materials for strip ${this.currentStripIndex}. Switching to restock mode.`);
           this.state = "RESTOCKING";
         } else {
-          const isComplete = await this.stripPlacer.buildCurrentStrip();
-          if(isComplete) await this.progressManager.completeCurrentStrip();
+          const isComplete = await this.stripPlacer.buildCurrentStrip(this.currentStripIndex);
+          if (isComplete) {
+            console.log(`[${this.bot.username}] Finished building strip ${this.currentStripIndex}.`);
+            await this.db.completeStrip(this.currentStripIndex);
+            this.currentStripIndex = null;
+            this.state = "CLAIMING";
+          }
           // After buildStrip returns, the loop will re-evaluate.
         }
       }
 
+      // --- Restocking State ---
       if (this.state === "RESTOCKING") {
-        const required =
-          this.progressManager.getRequiredMaterialsForCurrentStrip();
+        const required = await this.getRequiredMaterialsForStrip(this.currentStripIndex);
         const success = await this.restocker.restock(required);
         if (success) {
-          this.bot.chat(
-            `/msg ${this.master} Restocking complete. Resuming building.`
-          );
+          console.log(`[${this.bot.username}] Restocking complete. Resuming building.`);
           this.state = "BUILDING";
         } else {
-          this.bot.chat(
-            `/msg ${this.master} Failed to restock all required materials. Pausing task.`
-          );
-          this.state = "PAUSED";
+          console.log(`[${this.bot.username}] Failed to restock all materials. Releasing strip ${this.currentStripIndex} and pausing for 5 minutes.`);
+          await this.db.releaseStrip(this.currentStripIndex);
+          this.currentStripIndex = null;
+          this.state = "IDLE";
+          await this.bot.waitForTicks(20 * 60 * 5); // Wait 5 minutes
         }
       }
     }
+  }
+
+  async getRequiredMaterialsForStrip(stripIndex) {
+      const requiredMaterials = {};
+      const placements = await this.db.getPlacementsForStrip(stripIndex);
+
+      for (const placement of placements) {
+          requiredMaterials[placement.item_id] = (requiredMaterials[placement.item_id] || 0) + 1;
+      }
+      return requiredMaterials;
   }
 
   _hasMaterials(required) {
     for (const itemName in required) {
       const requiredCount = required[itemName];
-      // FIX: Now correctly accesses `this.mcData`
-      const currentCount = this.bot.inventory.count(
-        this.mcData.itemsByName[itemName].id,
-        null
-      );
+      const currentCount = this.bot.inventory.count(this.mcData.itemsByName[itemName].id, null);
       if (currentCount < requiredCount) {
         return false;
       }
@@ -243,6 +157,4 @@ class MapArtBot extends MinimalBot {
   }
 }
 
-// --- Execution ---
-console.log("Starting MapArtBot...");
-const myBot = new MapArtBot({ ...botConfig, pluginsSuccessVerbose: true });
+module.exports = MapArtBot;

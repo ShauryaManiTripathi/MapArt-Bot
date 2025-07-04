@@ -1,0 +1,80 @@
+[
+  {
+    "host": "shaurya43544-z1zg.aternos.me",
+    "port": 48687,
+    "username": "M_B_1",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "shaurya43544-z1zg.aternos.me",
+    "port": 48687,
+    "username": "M_B_2",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "shaurya43544-z1zg.aternos.me",
+    "port": 48687,
+    "username": "M_B_3",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "shaurya43544-z1zg.aternos.me",
+    "port": 48687,
+    "username": "M_B_4",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "shaurya43544-z1zg.aternos.me",
+    "port": 48687,
+    "username": "M_B_5",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "shaurya43544-z1zg.aternos.me",
+    "port": 48687,
+    "username": "M_B_6",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  }
+]
