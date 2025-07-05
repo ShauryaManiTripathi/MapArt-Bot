@@ -76,5 +76,135 @@
       "pathfinder": true,
       "tool": true
     }
+  },
+    {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_7",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_8",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_9",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_10",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_11",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_12",
+    "password": "kingkong",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+    {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_13",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_14",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_15",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
+  },
+  {
+    "host": "192.168.5.111",
+    "port": 25565,
+    "username": "Monorama_16",
+    "password": "sss",
+    "auth": "offline",
+    "version": "1.20.4",
+    "brand": "fabric",
+    "plugins": {
+      "pathfinder": true,
+      "tool": true
+    }
   }
 ]
