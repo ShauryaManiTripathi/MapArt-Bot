@@ -80,36 +80,55 @@ class StripPlacer {
         const minWorldZ = this.mapArtOrigin.z - maxZ;
         const maxWorldZ = this.mapArtOrigin.z - minZ;
 
-        const candidates = [];
+        const candidatePositions = [];
         for (let x = minWorldX - 1; x <= maxWorldX + 1; x++) {
-            candidates.push(new Vec3(x, this.mapArtOrigin.y, minWorldZ - 1));
-            candidates.push(new Vec3(x, this.mapArtOrigin.y, maxWorldZ + 1));
+            candidatePositions.push(new Vec3(x, this.mapArtOrigin.y, minWorldZ - 1));
+            candidatePositions.push(new Vec3(x, this.mapArtOrigin.y, maxWorldZ + 1));
         }
         for (let z = minWorldZ - 1; z <= maxWorldZ + 1; z++) {
-            candidates.push(new Vec3(minWorldX - 1, this.mapArtOrigin.y, z));
-            candidates.push(new Vec3(maxWorldX + 1, this.mapArtOrigin.y, z));
+            candidatePositions.push(new Vec3(minWorldX - 1, this.mapArtOrigin.y, z));
+            candidatePositions.push(new Vec3(maxWorldX + 1, this.mapArtOrigin.y, z));
         }
 
-        for (const candidate of candidates) {
-            if (candidate.x >= this.minBound.x && candidate.x <= this.maxBound.x &&
-                candidate.z >= this.minBound.z && candidate.z <= this.maxBound.z) {
+        let fallbackSpot = null; // Store the first valid 'air' spot found
+
+        for (const candidate of candidatePositions) {
+            // Basic boundary and safety checks
+            if (candidate.x < this.minBound.x || candidate.x > this.maxBound.x ||
+                candidate.z < this.minBound.z || candidate.z > this.maxBound.z) {
+                continue;
+            }
+
+            const headBlock = this.bot.blockAt(candidate.offset(0, 1, 0));
+            if (!headBlock || headBlock.boundingBox !== 'empty') {
+                continue; // Not safe, head is obstructed
+            }
+
+            // Check if all blocks in the batch are reachable from this spot
+            const allReachable = batch.every(placement => {
+                const targetPos = this.mapArtOrigin.offset(-placement.x, 0, -placement.z);
+                return candidate.distanceTo(targetPos) <= 4.5;
+            });
+
+            if (allReachable) {
                 const footBlock = this.bot.blockAt(candidate);
-                const headBlock = this.bot.blockAt(candidate.offset(0, 1, 0));
-                
-                if (footBlock && headBlock && 
-                    (footBlock.boundingBox === 'empty' || footBlock.name.endsWith('_carpet')) && 
-                    headBlock.boundingBox === 'empty') {
-                    
-                    let allReachable = batch.every(placement => {
-                        const targetPos = this.mapArtOrigin.offset(-placement.x, 0, -placement.z);
-                        return candidate.distanceTo(targetPos) <= 4.5;
-                    });
-                    
-                    if (allReachable) return candidate;
+                if (!footBlock) continue;
+
+                // PREFERRED: If it's a carpet, we've found our ideal spot. Return immediately.
+                if (footBlock.name.endsWith('_carpet')) {
+                    return candidate;
+                }
+
+                // ACCEPTABLE: If it's air and we don't have a fallback yet, save it.
+                // We continue searching in case a better (carpet) spot exists.
+                if (footBlock.boundingBox === 'empty' && fallbackSpot === null) {
+                    fallbackSpot = candidate;
                 }
             }
         }
-        return null;
+
+        // If the loop finished without finding a carpet spot, return the first air spot we found (or null).
+        return fallbackSpot;
     }
     
     async placeBatchFromPosition(batch, standPos) {
