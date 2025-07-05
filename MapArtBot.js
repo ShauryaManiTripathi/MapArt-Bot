@@ -52,7 +52,7 @@ class MapArtBot extends MinimalBot {
 
   // --- Main Logic Loop ---
   async mainLoop() {
-    await this.bot.waitForTicks(200*this.botIndex);
+    await this.bot.waitForTicks(200*(this.totalBots-this.botIndex));
     while (this.shouldRun) {
       await this.bot.waitForTicks(20); // Loop runs every second
 
