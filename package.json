@@ -1,15 +1,16 @@
 {
   "scripts": {
     "postinstall": "patch-package",
-    "start": "node run.js start",
-    "status": "node run.js status",
-    "pause": "node run.js pause",
-    "continue": "node run.js continue",
-    "clear": "node run.js clear"
+    "start": "node run.js",
+    "status": "echo \"Run 'node run.js' and use the 'status' command interactively\"",
+    "pause": "echo \"Run 'node run.js' and use the 'pause' command interactively\"",
+    "continue": "echo \"Run 'node run.js' and use the 'continue' command interactively\"",
+    "clear": "echo \"Run 'node run.js' and use the 'clear' command interactively\""
   },
   "dependencies": {
     "@nxg-org/mineflayer-custom-pvp": "^1.7.6",
     "axios": "^1.6.8",
+    "blessed": "^0.1.81",
     "canvas": "^3.1.2",
     "commander": "^12.0.0",
     "jimp": "^0.22.10",

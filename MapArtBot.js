@@ -87,8 +87,10 @@ class MapArtBot extends MinimalBot {
           // No strips available. The map might be done or others are working.
           const stats = await this.db.getCompletionStats();
           if (stats.pending_strips === 0 && stats.assigned_strips === 0) {
-              console.log(`[${this.bot.username}] All strips are complete. Shutting down.`);
-              this.shutdown();
+              // --- CHANGE: Instead of shutting down, go idle and wait for a new project. ---
+              console.log(`[${this.bot.username}] All strips are complete. Idling and awaiting new project orders.`);
+              this.state = "IDLE";
+              // this.shutdown(); // <-- REMOVED
           } else {
               // console.log(`[${this.bot.username}] No pending strips to claim. Waiting...`);
           }
