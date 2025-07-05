@@ -8,11 +8,11 @@
     "clear": "node run.js clear"
   },
   "dependencies": {
-    "patch-package": "*",
     "@nxg-org/mineflayer-custom-pvp": "^1.7.6",
     "axios": "^1.6.8",
     "canvas": "^3.1.2",
     "commander": "^12.0.0",
+    "jimp": "^0.22.10",
     "minecraft-data": "*",
     "mineflayer": "*",
     "mineflayer-armor-manager": "*",
@@ -22,12 +22,13 @@
     "mineflayer-pvp": "^1.3.2",
     "mineflayer-tool": "*",
     "mineflayer-web-inventory": "^1.8.5",
+    "patch-package": "*",
+    "prismarine-schematic": "^1.2.3",
     "prismarine-viewer": "^1.33.0",
     "socks": "^2.8.5",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "vec3": "^0.1.8",
-    "jimp": "^0.22.10"
+    "vec3": "^0.1.8"
   },
   "devDependencies": {
     "socks": "^2.8.5"
