@@ -180,7 +180,7 @@ class MinimalBot {
       }
 
       // If captcha is required, solve it first and wait for completion.
-      if (this._options.auth === "offline" || this._options.host === "6b6t.org") {
+      if (this._options.auth === "offline" || this._options.host.includes("6b6t.org")) {
         this.bot.chat(`/login ${this.options.password}`);
         console.log("=== Initiating Captcha Bypass ===");
 
