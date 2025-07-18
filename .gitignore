@@ -7,3 +7,4 @@ mapart.sqlite
 mapart.sqlite-wal
 mapart.sqlite-shm
 processed/
+.references/

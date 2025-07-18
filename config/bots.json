@@ -1,48 +1,9 @@
 [
   {
-    "host": "192.168.5.111",
+    "host": "play.6b6t.org",
     "port": 25565,
-    "username": "Monorama_1",
-    "password": "sss",
-    "auth": "offline",
-    "version": "1.20.4",
-    "brand": "fabric",
-    "plugins": {
-      "pathfinder": true,
-      "tool": true
-    }
-  },
-  {
-    "host": "192.168.5.111",
-    "port": 25565,
-    "username": "Monorama_2",
-    "password": "sss",
-    "auth": "offline",
-    "version": "1.20.4",
-    "brand": "fabric",
-    "plugins": {
-      "pathfinder": true,
-      "tool": true
-    }
-  },
-  {
-    "host": "192.168.5.111",
-    "port": 25565,
-    "username": "Monorama_3",
-    "password": "sss",
-    "auth": "offline",
-    "version": "1.20.4",
-    "brand": "fabric",
-    "plugins": {
-      "pathfinder": true,
-      "tool": true
-    }
-  },
-  {
-    "host": "192.168.5.111",
-    "port": 25565,
-    "username": "Monorama_4",
-    "password": "sss",
+    "username": "pandatyeX",
+    "password": "kingkong",
     "auth": "offline",
     "version": "1.20.4",
     "brand": "fabric",

@@ -1,37 +1,14 @@
 {
-  "scripts": {
-    "postinstall": "patch-package",
-    "start": "node run.js",
-    "status": "echo \"Run 'node run.js' and use the 'status' command interactively\"",
-    "pause": "echo \"Run 'node run.js' and use the 'pause' command interactively\"",
-    "continue": "echo \"Run 'node run.js' and use the 'continue' command interactively\"",
-    "clear": "echo \"Run 'node run.js' and use the 'clear' command interactively\""
-  },
   "dependencies": {
-    "@nxg-org/mineflayer-custom-pvp": "^1.7.6",
-    "axios": "^1.6.8",
-    "blessed": "^0.1.81",
+    "axios": "^1.10.0",
     "canvas": "^3.1.2",
-    "commander": "^12.0.0",
-    "jimp": "^0.22.10",
-    "minecraft-data": "*",
-    "mineflayer": "*",
-    "mineflayer-armor-manager": "*",
-    "mineflayer-auto-eat": "^5.0.1",
-    "mineflayer-autocrystal": "*",
-    "mineflayer-pathfinder-antilagback": "*",
-    "mineflayer-pvp": "^1.3.2",
-    "mineflayer-tool": "*",
-    "mineflayer-web-inventory": "^1.8.5",
-    "patch-package": "*",
-    "prismarine-schematic": "^1.2.3",
+    "minecraft-data": "^3.93.0",
+    "mineflayer": "^4.30.0",
+    "mineflayer-pathfinder": "^2.4.5",
+    "mineflayer-tool": "^1.2.0",
+    "net": "^1.0.2",
     "prismarine-viewer": "^1.33.0",
-    "socks": "^2.8.5",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
-    "vec3": "^0.1.8"
-  },
-  "devDependencies": {
-    "socks": "^2.8.5"
+    "sharp": "^0.34.3",
+    "socks": "^2.8.6"
   }
 }
