@@ -165,19 +165,31 @@ class StripPlacer {
                     if (!this.bot.inventory.findInventoryItem(targetItem.id)) throw new Error(`Missing item ${placement.item_id}`);
                     await this.bot.equip(targetItem.id, 'hand');
                     if (!this.bot.heldItem || this.bot.heldItem.type !== targetItem.id) throw new Error(`Failed to equip ${placement.item_id}`);
-                    
+
                     const referenceBlock = this.bot.blockAt(blockBelowPos);
                     if (!referenceBlock) throw new Error(`Reference block at ${blockBelowPos} is missing/unloaded.`);
-                    
+
                     const shouldSneak = needsSneakToPlaceOn(referenceBlock);
                     if (shouldSneak) this.bot.setControlState('sneak', true);
-                    
+
+                    // try {
+                    //     await this.bot.placeBlock(referenceBlock, new Vec3(0, 1, 0));
                     try {
-                        await this.bot.placeBlock(referenceBlock, new Vec3(0, 1, 0));
+                        // Direct packet writing instead of placeBlock()
+                        this.bot._client.write('block_place', {
+                            location: referenceBlock.position,
+                            direction: 1, // 1 = up (Vec3(0, 1, 0))
+                            heldItem: this.bot.heldItem,
+                            cursorX: 0.5,
+                            cursorY: 1.0,
+                            cursorZ: 0.5,
+                            insideBlock: false,
+                            hand: 0 // 0 = main hand
+                        });
+                        this.bot.waitForTicks(2);
                     } finally {
                         if (shouldSneak) this.bot.setControlState('sneak', false);
                     }
-
                     await this.db.updateBlockPlaced(placement.x, placement.z);
                     break;
                     
