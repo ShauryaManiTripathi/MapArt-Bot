@@ -7,6 +7,10 @@ const {
         Movements,
       } = require("mineflayer-pathfinder");
 const { mineflayer: mineflayerViewer } = require("prismarine-viewer");
+
+const axios = require('axios');
+const API_BASE_URL = 'http://localhost:4000';
+
 /**
  * A helper function for creating a non-blocking delay.
  * @param {number} ms - The number of milliseconds to wait.
@@ -26,9 +30,9 @@ class MyCustomBot extends StateMachineBot {
      */
     _loadPlugins(){
         this.bot.loadPlugin(pathfinder);
-        mineflayerViewer(this.bot,{
-          port: 3000,firstPerson: false});
-        return;
+        // mineflayerViewer(this.bot,{
+        //   port: 3000,firstPerson: false});
+        // return;
     }
 
     /**
@@ -106,29 +110,34 @@ class MyCustomBot extends StateMachineBot {
      * It now uses a non-blocking async loop for its tasks.
      */
     async _onEnterMainServer() {
-        console.log(`[${this.options.username}] Successfully connected to MAIN_SERVER. Starting tasks.`);
-        this.bot.chat("Hello everyone! I am here to do important things.");
+        console.log(`[${this.options.username}] In MAIN_SERVER. Starting map art job loop.`);
+        this.currentJob = null;
 
         try {
-            // This loop will run as long as the bot is in the MAIN_SERVER state.
             while (this.state === BOT_STATES.MAIN_SERVER) {
-                // --- YOUR TASK LOGIC GOES HERE ---
-                // This is where you would do things like mine, build, or fight.
-                // Even if your task takes a while, the 'await sleep' below will prevent blocking.
-                
-                this.bot.swingArm();
-                console.log(`[${this.options.username}] Doing my main server task...`);
-                
-                // --- END OF TASK LOGIC ---
+                if (!this.currentJob) {
+                    this.currentJob = await this.requestJob();
+                }
 
-                // Wait for 10 seconds before the next loop iteration.
-                // THIS IS THE MOST IMPORTANT PART. It yields control back to the event loop.
-                await sleep(10000);
+                if (this.currentJob) {
+                    const success = await this.executeJob(this.currentJob);
+                    if (success) {
+                        await this.reportJobComplete(this.currentJob);
+                    } else {
+                        // The job will time out and be reassigned automatically by the server.
+                        console.log(`[${this.options.username}] Failed job ${this.currentJob.jobId}. It will be re-queued after timeout.`);
+                    }
+                    this.currentJob = null; // Clear job to request a new one
+                } else {
+                    // No jobs were available, wait before trying again.
+                    console.log(`[${this.options.username}] No jobs available. Waiting...`);
+                    await sleep(3000); // Wait 3 seconds
+                }
             }
         } catch (err) {
             console.error(`[${this.options.username}] Error in main server task loop:`, err);
         } finally {
-            console.log(`[${this.options.username}] Exiting main server task loop as state has changed.`);
+            console.log(`[${this.options.username}] Exiting main server task loop.`);
         }
     }
 
@@ -168,7 +177,7 @@ class MyCustomBot extends StateMachineBot {
         super.disconnect(reason);
     }
 
-    // ! ////////////////////////// CAPTCHA METHODS //////////////////////////
+    // ! ////////////////////////// onLobby Helpers //////////////////////////
     getGreenWoolPositions() {
         const range = 50;
         const greenWoolPositions = [];
@@ -291,6 +300,73 @@ class MyCustomBot extends StateMachineBot {
         await this.followGreenWoolPath();
     }
     // ! /////////////////////////////////////////////////////////////////////
+
+    // ! ////////////////////////// onMainServer Helpers ////////////////////////////////
+    /**
+     * Requests a job from the central API server.
+     */
+    async requestJob() {
+        try {
+            console.log(`[${this.options.username}] Requesting a job...`);
+            const response = await axios.post(`${API_BASE_URL}/api/jobs/request`, {
+                botId: this.bot.username
+            });
+
+            if (response.data && response.data.jobId) {
+                console.log(`[${this.options.username}] Received job: ${response.data.type}`);
+                return response.data;
+            }
+            return null;
+        } catch (error) {
+            console.error(`[${this.options.username}] Could not request job:`, error.message);
+            return null;
+        }
+    }
+     /**
+     * Executes the logic for the received job.
+     * @param {object} job The job object from the server.
+     * @returns {boolean} True if successful, false otherwise.
+     */
+    async executeJob(job) {
+        console.log(`[${this.options.username}] Executing job ${job.jobId} of type ${job.type}`);
+        if (job.type === 'BUILD_SEGMENT') {
+            // TODO: Implement the logic to build the 16x32 area.
+            // You have `job.colorData` (a 2D array of color indexes)
+            console.log(job.segmentCoords);
+            console.log(job.colorData);
+            // and `job.segmentCoords` (the relative position within the 128x128 chunk).
+            // You will need to calculate the absolute world coordinates.
+            this.bot.chat(`Building segment ${job.segmentCoords.x}, ${job.segmentCoords.y}`);
+            await sleep(1000); // Placeholder for actual building time
+            return true; // Assume success for now
+        } else if (job.type === 'SAVE_MAP') {
+            // TODO: Implement the logic to go to the map location,
+            // put an empty map in an item frame, and lock it.
+            this.bot.chat(`I am now saving the map for chunk ${job.chunkCoords.x}, ${job.chunkCoords.y}`);
+            await sleep(1500); // Placeholder for map saving time
+            return true; // Assume success
+        }
+        return false;
+    }
+
+    /**
+     * Reports a job as successfully completed to the API server.
+     * @param {object} job The job object.
+     */
+    async reportJobComplete(job) {
+        try {
+            await axios.post(`${API_BASE_URL}/api/jobs/complete`, {
+                jobId: job.jobId,
+                jobType: job.type
+            });
+            console.log(`[${this.options.username}] Successfully reported completion for job ${job.jobId}.`);
+        } catch (error) {
+            console.error(`[${this.options.username}] Could not report job completion:`, error.message);
+        }
+    }
+    // ! ////////////////////////////////////////////////////////////////////////////////
+
+
 }
 
 module.exports = MyCustomBot;

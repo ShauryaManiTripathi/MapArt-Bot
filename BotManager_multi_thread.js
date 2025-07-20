@@ -59,13 +59,13 @@ class BotManager {
 
         console.log("Sending 'start' command to all bot processes...");
         
-        let connectInterval = 0;
+        let connectInterval = -1;
         this.childBots.forEach(child => {
             // Stagger the start commands to avoid all bots connecting at the exact same moment.
+            connectInterval++;
             setTimeout(() => {
                 child.send({ type: 'command', payload: { command: 'start' } });
-            }, connectInterval * 5000);
-            connectInterval++;
+            }, connectInterval * 7000);
         });
     }
 

@@ -562,4 +562,4 @@ class ImageProcessor {
 module.exports = ImageProcessor;
 
 // Example usage:
-ImageProcessor.processLargeImage('https://upload.wikimedia.org/wikipedia/commons/5/5e/Messier83_-_Heic1403a.jpg', 100, 100, 'floydSteinberg');
+ImageProcessor.processLargeImage('https://upload.wikimedia.org/wikipedia/commons/5/5e/Messier83_-_Heic1403a.jpg', 5, 5, 'floydSteinberg');
