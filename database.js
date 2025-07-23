@@ -73,8 +73,9 @@ class MapArtDatabase {
                 isFirstChunk = false;
 
                 const chunkId = chunkResult.lastInsertRowid;
-                for (let sy = 0; sy < 4; sy++) {
-                    for (let sx = 0; sx < 8; sx++) {
+                // Create a 4x8 grid of 32x16 segments
+                for (let sy = 0; sy < 8; sy++) { // New: 128 / 16 = 8
+                    for (let sx = 0; sx < 4; sx++) { // New: 128 / 32 = 4
                         insertSegment.run(chunkId, sx, sy);
                     }
                 }
@@ -216,10 +217,11 @@ class MapArtDatabase {
     getSegmentData(jsonPath, segmentX, segmentY) {
         const fullData = require(path.resolve(jsonPath));
         const segmentData = [];
-        const startY = segmentY * 32;
-        const startX = segmentX * 16;
-        for(let i = 0; i < 32; i++){
-            segmentData.push(fullData[startY + i].slice(startX, startX + 16));
+        // Extract a slice that is 32 wide and 16 high
+        const startY = segmentY * 16;
+        const startX = segmentX * 32;
+        for(let i = 0; i < 16; i++){
+            segmentData.push(fullData[startY + i].slice(startX, startX + 32));
         }
         return segmentData;
     }

@@ -115,7 +115,6 @@ class StateMachineBot {
             // Only process messages if we are in the "freeze" state.
             if (this.state === BOT_STATES.EVALUATING || true) { // bypassed status check for being evaluating
                 // Pass the raw message to the child class for interpretation.
-                console.log(`==================evaluating for ${this.bot.username} with ${jsonMsg.toString()}`);
                 this._evaluateLocation(jsonMsg.toString());
             }
         });

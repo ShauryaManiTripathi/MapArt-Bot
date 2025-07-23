@@ -1,51 +1,55 @@
 [
   {
-    "host": "10.209.162.155",
+    "host": "10.33.180.118",
     "port": 25565,
     "username": "Monorama_1",
     "password": "sss",
     "auth": "offline",
     "version": "1.20.4",
     "brand": "fabric",
+    "viewDistance": 32,
     "plugins": {
       "pathfinder": true,
       "tool": true
     }
   },
   {
-    "host": "10.209.162.155",
+    "host": "10.33.180.118",
     "port": 25565,
     "username": "Monorama_2",
     "password": "sss",
     "auth": "offline",
     "version": "1.20.4",
     "brand": "fabric",
+    "viewDistance": 32,
     "plugins": {
       "pathfinder": true,
       "tool": true
     }
   },
   {
-    "host": "10.209.162.155",
+    "host": "10.33.180.118",
     "port": 25565,
     "username": "Monorama_3",
     "password": "sss",
     "auth": "offline",
     "version": "1.20.4",
     "brand": "fabric",
+    "viewDistance": 32,
     "plugins": {
       "pathfinder": true,
       "tool": true
     }
   },
   {
-    "host": "10.209.162.155",
+    "host": "10.33.180.118",
     "port": 25565,
     "username": "Monorama_4",
     "password": "sss",
     "auth": "offline",
     "version": "1.20.4",
     "brand": "fabric",
+    "viewDistance": 32,
     "plugins": {
       "pathfinder": true,
       "tool": true
